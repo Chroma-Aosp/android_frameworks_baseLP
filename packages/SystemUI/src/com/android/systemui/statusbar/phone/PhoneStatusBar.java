@@ -769,7 +769,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         updateDisplaySize(); // populates mDisplayMetrics
         updateResources();
 
-        mIconSize = res.getDimensionPixelSize(com.android.internal.R.dimen.status_bar_icon_size);
+        mIconSize = res.getDimensionPixelSize(R.dimen.status_bar_icon_size);
 
         mStatusBarWindow = (StatusBarWindowView) View.inflate(context,
                 R.layout.super_status_bar, null);
@@ -1069,8 +1069,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mUserInfoController.reloadUserInfo();
 
         mHeader.setBatteryController(mBatteryController);
-        ((BatteryMeterView) mStatusBarView.findViewById(R.id.battery)).setBatteryController(
-                mBatteryController);
+        BatteryMeterView batteryMeterView =
+                ((BatteryMeterView) mStatusBarView.findViewById(R.id.battery));
+        batteryMeterView.setBatteryController(mBatteryController);
+        batteryMeterView.setAnimationsEnabled(false);
         ((BatteryLevelTextView) mStatusBarView.findViewById(R.id.battery_level_text))
                 .setBatteryController(mBatteryController);
         mKeyguardStatusBar.setBatteryController(mBatteryController);
@@ -1778,8 +1780,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     }
 
     private void updateNotificationIcons() {
+        final int effectiveIconWidth = IconMerger.calculateIconWidth(mContext);
         final LinearLayout.LayoutParams params
-            = new LinearLayout.LayoutParams(mIconSize + 2*mIconHPadding, mNaturalBarHeight);
+            = new LinearLayout.LayoutParams(effectiveIconWidth, mNaturalBarHeight);
 
         ArrayList<Entry> activeNotifications = mNotificationData.getActiveNotifications();
         final int N = activeNotifications.size();
@@ -3603,21 +3606,24 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     public void userSwitched(int newUserId) {
         super.userSwitched(newUserId);
         if (MULTIUSER_DEBUG) mNotificationPanelDebugText.setText("USER " + newUserId);
+
+        WallpaperManager wm = (WallpaperManager)
+                mContext.getSystemService(Context.WALLPAPER_SERVICE);
+        wm.forgetLoadedKeyguardWallpaper();
+        mKeyguardWallpaper = null;
+
         animateCollapsePanels();
         updatePublicMode();
         updateNotifications(true);
         resetUserSetupObserver();
         setControllerUsers();
 
-        WallpaperManager wm = (WallpaperManager)
-                mContext.getSystemService(Context.WALLPAPER_SERVICE);
-        wm.forgetLoadedKeyguardWallpaper();
-        mKeyguardWallpaper = wm.getKeyguardBitmap();
-        updateMediaMetaData(true);
-
         if (mNavigationBarView != null) {
             mNavigationBarView.updateSettings();
         }
+
+        mKeyguardWallpaper = wm.getKeyguardBitmap();
+        updateMediaMetaData(true);
     }
 
     private void setControllerUsers() {
@@ -3705,7 +3711,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 com.android.internal.R.dimen.status_bar_height);
 
         int newIconSize = res.getDimensionPixelSize(
-            com.android.internal.R.dimen.status_bar_icon_size);
+            R.dimen.status_bar_icon_size);
         int newIconHPadding = res.getDimensionPixelSize(
             R.dimen.status_bar_icon_padding);
 
